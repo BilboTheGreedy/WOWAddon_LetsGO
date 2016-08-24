@@ -1,0 +1,7 @@
+## Interface: 70000
+## Title: LetsGo
+## Author: Bilbo
+## Version: 1.0
+## SavedVariables: LG_SavedVars
+MenuFrame.xml
+main.lua
