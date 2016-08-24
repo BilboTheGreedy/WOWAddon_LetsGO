@@ -46,6 +46,9 @@ if LG_SavedVars.enabled then
 		print(string.format("[%s] [%s]: %s %s", channel, sender, prefix, msg))
 		RepopMe();
 		end
+	if prefix == MSG_PREFIX and msg == "acceptrade" and channel == "WHISPER" then 
+		AcceptTrade();
+		end
 	if prefix == MSG_SAY and channel == "WHISPER" then 
 		SendChatMessage(msg, "SAY")
 		end
