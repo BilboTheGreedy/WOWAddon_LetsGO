@@ -42,6 +42,10 @@ if LG_SavedVars.enabled then
 		print(string.format("[%s] [%s]: %s %s", channel, sender, prefix, msg))
 		AcceptResurrect();
 		end
+	if prefix == MSG_PREFIX and msg == "repopme" and channel == "WHISPER" then 
+		print(string.format("[%s] [%s]: %s %s", channel, sender, prefix, msg))
+		RepopMe();
+		end
 	if prefix == MSG_SAY and channel == "WHISPER" then 
 		SendChatMessage(msg, "SAY")
 		end
@@ -54,7 +58,7 @@ if LG_SavedVars.enabled then
 			if (UnitLevel("player")) ~= 110 then
 			XP = UnitXP("player")
 			XPMax = UnitXPMax("player")
-			SendChatMessage("My  XP is currently at "..floor( (XP / XPMax)*100 ).."%.","GUILD")
+			SendChatMessage("My Level XP is at "..floor( (XP / XPMax)*100 ).."%.","WHISPER", nil, sender)
 			end
 		end
 	   end
@@ -154,6 +158,28 @@ UIConfig.acceptresurrectBtn:SetHighlightFontObject("GameFontHighlightLarge");
 UIConfig.acceptresurrectBtn:SetScript("OnClick", function(self,event) 
 print("Accept Resurrect")
 	SendAddonMessage("LetsGO", "acceptresurrect", "WHISPER", LG_SavedVars.charName)
+end)
+
+UIConfig.repopmeBtn = CreateFrame("Button", nil, UIConfig, "GameMenuButtonTemplate");
+UIConfig.repopmeBtn:SetPoint("CENTER", UIConfig.acceptresurrectBtn, "CENTER", 125, 0);
+UIConfig.repopmeBtn:SetSize(120, 40);
+UIConfig.repopmeBtn:SetText("Release Spirit");
+UIConfig.repopmeBtn:SetNormalFontObject("GameFontNormalLarge");
+UIConfig.repopmeBtn:SetHighlightFontObject("GameFontHighlightLarge");
+UIConfig.repopmeBtn:SetScript("OnClick", function(self,event) 
+print("Release Spirit")
+	SendAddonMessage("LetsGO", "repopme", "WHISPER", LG_SavedVars.charName)
+end)
+
+UIConfig.expBtn = CreateFrame("Button", nil, UIConfig, "GameMenuButtonTemplate");
+UIConfig.expBtn:SetPoint("CENTER", UIConfig.repopmeBtn, "CENTER", 0, -50);
+UIConfig.expBtn:SetSize(120, 40);
+UIConfig.expBtn:SetText("Level Experiance");
+UIConfig.expBtn:SetNormalFontObject("GameFontNormalLarge");
+UIConfig.expBtn:SetHighlightFontObject("GameFontHighlightLarge");
+UIConfig.expBtn:SetScript("OnClick", function(self,event) 
+print("Level Experiance")
+	SendAddonMessage("LetsGO", "xp", "WHISPER", LG_SavedVars.charName)
 end)
 
 UIConfig.saveBtn = CreateFrame("Button", nil, UIConfig, "GameMenuButtonTemplate");
