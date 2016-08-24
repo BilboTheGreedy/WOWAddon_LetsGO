@@ -1,4 +1,4 @@
-LG_SavedVars = {charName = "", enabled = true}; 
+LG_SavedVars = {charName = "Enter Character Name", enabled = true}; 
 
 local MSG_PREFIX = "LetsGO"
 local MSG_SAY = "LetsSAY"
@@ -11,6 +11,19 @@ RegisterAddonMessagePrefix(MSG_FOLLOW)
 local f = CreateFrame("Frame")
 f:RegisterEvent("CHAT_MSG_ADDON")
 f:SetScript("OnEvent", function(self, event, prefix, msg, channel, sender)
+
+-- Outside of commands-scope, for checking if other player got LetsGO Enabled.
+	if prefix == MSG_PREFIX and msg == "LetsGO:true" and channel == "WHISPER" then 
+		print(string.format("LetsGO: [%s] got \124cff00ff00\124hEnabled Receiving\124h\124r set", sender))
+	end
+	if prefix == MSG_PREFIX and msg == "LetsGO:false" and channel == "WHISPER" then 
+		print(string.format("LetsGO: [%s] got \124cffff0000\124hDisabled Receiving\124h\124r set", sender))
+	end
+	if prefix == MSG_PREFIX and msg == "CheckEnabled" and channel == "WHISPER" then 
+		SendAddonMessage(MSG_PREFIX, "LetsGO:" .. tostring(LG_SavedVars.enabled), "WHISPER", LG_SavedVars.charName)
+	end
+
+-- Inside of commands-scope, if player got LetsGO Enabled		
 if LG_SavedVars.enabled then
 	if prefix == MSG_PREFIX and msg == "dismount" and channel == "WHISPER" then 
 		print(string.format("[%s] [%s]: %s %s", channel, sender, prefix, msg))
@@ -24,6 +37,10 @@ if LG_SavedVars.enabled then
 		print(string.format("[%s] [%s]: %s %s", channel, sender, prefix, msg))
 		ConfirmSummon();
 		StaticPopup1:Hide();
+		end
+	if prefix == MSG_PREFIX and msg == "acceptresurrect" and channel == "WHISPER" then 
+		print(string.format("[%s] [%s]: %s %s", channel, sender, prefix, msg))
+		AcceptResurrect();
 		end
 	if prefix == MSG_SAY and channel == "WHISPER" then 
 		SendChatMessage(msg, "SAY")
@@ -44,12 +61,29 @@ if LG_SavedVars.enabled then
 	end)
 	
 local UIConfig = CreateFrame("Frame", "LetsGO_Frame", UIParent, "BasicFrameTemplateWithInset");
-UIConfig:SetSize(300, 240);
+UIConfig:SetSize(300, 280);
 UIConfig:SetPoint("CENTER", UIParent, "CENTER");
 LetsGO_Frame:Hide()
 LetsGO_Frame:SetMovable(true)
 LetsGO_Frame:EnableMouse(true)
-LetsGO_Frame:RegisterForDrag("LeftButton")
+LetsGO_Frame:SetScript("OnMouseDown", function(self, button)
+  if button == "LeftButton" and not self.isMoving then
+   self:StartMoving();
+   self.isMoving = true;
+  end
+end)
+LetsGO_Frame:SetScript("OnMouseUp", function(self, button)
+  if button == "LeftButton" and self.isMoving then
+   self:StopMovingOrSizing();
+   self.isMoving = false;
+  end
+end)
+LetsGO_Frame:SetScript("OnHide", function(self)
+  if ( self.isMoving ) then
+   self:StopMovingOrSizing();
+   self.isMoving = false;
+  end
+end)
 
 UIConfig.title = UIConfig:CreateFontString(nil, "OVERLAY");
 UIConfig.title:SetFontObject("GameFontHighlight");
@@ -62,6 +96,7 @@ UIConfig.charEditBox = CreateFrame("EditBox", nil, UIConfig, "InputBoxTemplate")
 UIConfig.charEditBox:SetPoint("CENTER", UIConfig, "TOP", 0, -50);
 UIConfig.charEditBox:SetSize(140, 50);
 UIConfig.charEditBox:ClearFocus(); 
+UIConfig.charEditBox:SetAutoFocus(false)
 UIConfig.charEditBox:SetText(LG_SavedVars.charName) 
 
 --Buttons
@@ -110,22 +145,35 @@ print("Accept Summon")
 	SendAddonMessage("LetsGO", "confirmsummon", "WHISPER", LG_SavedVars.charName)
 end)
 
+UIConfig.acceptresurrectBtn = CreateFrame("Button", nil, UIConfig, "GameMenuButtonTemplate");
+UIConfig.acceptresurrectBtn:SetPoint("CENTER", UIConfig.confirmsummonBtn, "CENTER", -125, -50);
+UIConfig.acceptresurrectBtn:SetSize(120, 40);
+UIConfig.acceptresurrectBtn:SetText("Accept Resurrect");
+UIConfig.acceptresurrectBtn:SetNormalFontObject("GameFontNormalLarge");
+UIConfig.acceptresurrectBtn:SetHighlightFontObject("GameFontHighlightLarge");
+UIConfig.acceptresurrectBtn:SetScript("OnClick", function(self,event) 
+print("Accept Resurrect")
+	SendAddonMessage("LetsGO", "acceptresurrect", "WHISPER", LG_SavedVars.charName)
+end)
+
 UIConfig.saveBtn = CreateFrame("Button", nil, UIConfig, "GameMenuButtonTemplate");
 UIConfig.saveBtn:SetPoint("CENTER", UIConfig.charEditBox, "Right", 25, 0);
 UIConfig.saveBtn:SetSize(40, 20);
 UIConfig.saveBtn:SetText("Save");
 UIConfig.saveBtn:SetNormalFontObject("GameFontNormalLarge");
 UIConfig.saveBtn:SetHighlightFontObject("GameFontHighlightLarge");
-UIConfig.saveBtn:SetScript("OnClick", function(self,event,arg1) 
-	print(UIConfig.charEditBox:GetText())
+UIConfig.saveBtn:RegisterEvent("CHAT_MSG_ADDON");
+UIConfig.saveBtn:SetScript("OnClick", function(self,event) 
+	print(string.format("Sending Commands to: \124cFFF56900\124h[%s]\124h\124r", UIConfig.charEditBox:GetText()))
 	LG_SavedVars.charName = UIConfig.charEditBox:GetText()
+	SendAddonMessage("LetsGO", "CheckEnabled", "WHISPER", LG_SavedVars.charName)
 end)
 
 -- Checkboxes
 
 UIConfig.rxChkBtn = CreateFrame("CheckButton", nil, UIConfig, "UICheckbuttonTemplate");
-UIConfig.rxChkBtn:SetPoint("TOPRIGHT", UIConfig.confirmsummonBtn, "BOTTOMLEFT", -90, -10);
-UIConfig.rxChkBtn.text:SetText("Enable Receiving LetsGO");
+UIConfig.rxChkBtn:SetPoint("TOPRIGHT", UIConfig.confirmsummonBtn, "BOTTOMLEFT", -90, -60);
+UIConfig.rxChkBtn.text:SetText("Enable Receiving");
 UIConfig.rxChkBtn:SetChecked(LG_SavedVars.enabled);
 UIConfig.rxChkBtn:SetScript("OnClick", function(self,event,arg1) 
   if self:GetChecked() then
@@ -137,9 +185,7 @@ UIConfig.rxChkBtn:SetScript("OnClick", function(self,event,arg1)
   end
 end)
 
-
-
-SLASH_letsgo1 = '/letsgo';
+SLASH_lg1 = '/lg';
 local function handler(msg, editbox)
  local command = msg:match("^(%S*)%s*(.-)$");
      print(GetAddOnMetadata("LetsGo", "Title"), 'version ' .. GetAddOnMetadata("LetsGo", "Version"));
@@ -147,4 +193,4 @@ local function handler(msg, editbox)
 	UIConfig.charEditBox:SetText(LG_SavedVars.charName) 
 	UIConfig.rxChkBtn:SetChecked(LG_SavedVars.enabled);
  end
-SlashCmdList["letsgo"] = handler;
+SlashCmdList["lg"] = handler;
